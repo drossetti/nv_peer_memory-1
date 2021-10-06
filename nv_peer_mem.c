@@ -145,15 +145,8 @@ static void nv_get_p2p_free_callback(void *data)
 #endif
 
 	__module_get(THIS_MODULE);
-	if (!nv_mem_context) {
-		peer_err("nv_get_p2p_free_callback -- invalid nv_mem_context\n");
-		goto out;
-	}
-
-	if (!nv_mem_context->page_table) {
-		peer_err("nv_get_p2p_free_callback -- invalid page_table\n");
-		goto out;
-	}
+	BUG_ON(0 == nv_mem_context);
+	BUG_ON(0 == nv_mem_context->page_table);
 
 	/* Save page_table locally to prevent it being freed as part of nv_mem_release
 	    in case it's called internally by that callback.
@@ -161,8 +154,8 @@ static void nv_get_p2p_free_callback(void *data)
 	page_table = nv_mem_context->page_table;
 
 #if NV_DMA_MAPPING
-	if (!nv_mem_context->dma_mapping) {
-		peer_err("nv_get_p2p_free_callback -- invalid dma_mapping\n");
+	if (WARN_ON(!nv_mem_context->dma_mapping)) {
+		peer_err("nv_get_p2p_free_callback -- nv_mem_context=%p has NULL dma_mapping\n", nv_mem_context);
 		goto out;
 	}
 	dma_mapping = nv_mem_context->dma_mapping;
@@ -260,7 +253,11 @@ static int nv_dma_map(struct sg_table *sg_head, void *context,
 	struct scatterlist *sg;
 	struct nv_mem_context *nv_mem_context =
 		(struct nv_mem_context *) context;
-	struct nvidia_p2p_page_table *page_table = nv_mem_context->page_table;
+	struct nvidia_p2p_page_table *page_table;
+
+	BUG_ON(0 == nv_mem_context);
+	BUG_ON(0 == nv_mem_context->page_table);
+	page_table = nv_mem_context->page_table;
 
 	if (page_table->page_size != NVIDIA_P2P_PAGE_SIZE_64KB) {
 		peer_err("nv_dma_map -- assumption of 64KB pages failed size_id=%u\n",
@@ -342,10 +339,8 @@ static int nv_dma_unmap(struct sg_table *sg_head, void *context,
 	struct nv_mem_context *nv_mem_context =
 		(struct nv_mem_context *)context;
 
-	if (!nv_mem_context) {
-		peer_err("nv_dma_unmap -- invalid nv_mem_context\n");
-		return -EINVAL;
-	}
+	BUG_ON(0 == nv_mem_context);
+	BUG_ON(0 == nv_mem_context->page_table);
 
 	if (WARN_ON(0 != memcmp(sg_head, &nv_mem_context->sg_head, sizeof(*sg_head))))
 		return -EINVAL;
@@ -377,10 +372,8 @@ static void nv_mem_put_pages(struct sg_table *sg_head, void *context)
 	struct nv_mem_context *nv_mem_context =
 		(struct nv_mem_context *) context;
 
-	if (!nv_mem_context) {
-		peer_err("nv_mem_put_pages -- invalid nv_mem_context\n");
-		return;
-	}
+	BUG_ON(0 == nv_mem_context);
+	BUG_ON(0 == nv_mem_context->page_table);
 
 	if (WARN_ON(0 != memcmp(sg_head, &nv_mem_context->sg_head, sizeof(*sg_head))))
 		return;
