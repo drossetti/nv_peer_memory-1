@@ -45,6 +45,16 @@
 #include "nv-p2p.h"
 #include <rdma/peer_mem.h>
 
+enum {
+	PEER_MEM_INVALIDATE_UNMAPS = 1 << 0,
+};
+
+struct peer_memory_client_ex {
+	struct peer_memory_client client;
+	size_t ex_size;
+	u32 flags;
+};
+
 #define DRV_NAME	"nv_mem"
 #define DRV_VERSION	"1.2-0"
 #define DRV_RELDATE	__DATE__
